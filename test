@@ -1,0 +1,23 @@
+#define leftA_track_PIN   21                            //定义寻迹的左A引脚
+#define leftB_track_PIN   18                            //定义寻迹的左B引脚
+#define righA_track_PIN   19                            //定义寻迹的右A引脚
+#define righB_track_PIN   5                             //定义寻迹的右B引脚
+
+void read_sensor_values()
+{
+    //读取寻迹传感器的数值左右各一个
+    sensor[0] = digitalRead(leftA_track_PIN);            //八字形排布，左A
+    sensor[1] = digitalRead(leftB_track_PIN);            //左B
+    sensor[2] = digitalRead(righA_track_PIN);            //右A
+    sensor[3] = digitalRead(righB_track_PIN);            //右B
+
+    Serial.println(sensor[0],sensor[1],sensor[2],sensor[3]);
+    sleep(500);
+}
+
+void loop()
+{
+    Serial.begin(9600);
+    read_sensor_values();
+
+}

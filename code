@@ -1,0 +1,117 @@
+/*
+这是电赛-循迹小车的代码demo，主要功能为使用硬件esp32，采用aduino，来实现控制小车的一个循迹功能。
+目前还需要改进的有(王欣钺）：
+1.对于esp32接入的各个引脚尚未确定
+两个寻迹16/17
+两个电机14/15，通道0/1
+2.对于pid算法的kp,ki,kd，是怎么确认的数值？
+kp=18,ki=0,kd=3,转换为-255~+255之间的值
+3.对于小车电机的pwm波，应该由pid算法如何转换得到?
+乘以20得到上限是5khz的频率
+遇到其他问题请添加在下面：
+1.
+2.
+*/
+
+#define leftA_track_PIN  = 16                            //定义寻迹的左A引脚
+#define righA_track_PIN  = 17                            //定义寻迹的右A引脚
+
+
+#define left_motor  = 14;                                //14、15脚输出pwm波
+#define right_motor = 15;
+
+int sensor[2] ;
+
+void read_sensor_values()
+{
+    //读取寻迹传感器的数值左右各一个
+    sensor[0] = digitalRead(leftA_track_PIN);            //八字形排布，左A
+    sensor[1] = digitalRead(leftB_track_PIN);            //右A
+
+    /*
+    根据传感器的数值判断是小左转、大左转、直行、小右转、大右转
+    然后返回pid控制算法的error值
+    */
+
+    if ((sensor[0] == 0) && (sensor[1] ==1))
+    {
+        error = 2;                                  //          0 1  右转
+    }
+    else if ((sensor[0] == 1) && (sensor[1] == 0))
+    {
+      error = -2;                                   //          1 0 左转
+    }
+    else
+    {
+      error = 0;                                   //           0 0 直行
+    }
+}
+
+int P,I,D,previous_error;
+static int initial_motor_speed = 110;
+float kp = 18, ki = 0, kd = 3   ;//pid参数调整
+float error = 0, P = 0, I = 0, D = 0, PID_value = 0;
+float previous_error = 0;
+
+void calc_pid()
+{
+    //pid控制算法具体程序
+     P = error;                                     //比例控制
+     I = I+error;                                   //积分控制，离散状态下积分为累加
+     D = error-previous_error;                      //微分控制，离散状态下微分为此时刻与上一时刻的差值
+     PID_value = kp * P + ki * I + kd * D;          //最终的PID值
+     previous_error = error;                        //存储上一时间的error值
+  }
+
+double left_motor_speed,initial_L_motor_speed,right_motor_speed,initial_R_motor_speed;
+double initial_L_motor_spee,initial_R_motor_speed;
+
+void setup_motor()
+{
+    ledcSetup(0, 5000, 10);               //通道0， 5KHz，10位解析度
+    ledcSetup(1, 5000, 10);               //通道1， 5KHz，10位解析度
+}
+
+void motor_ctrl()
+{
+    //电机控制程序
+    //这一部分有待调试
+    left_motor_speed = initial_L_motor_speed + PID_value;//左轮之前的频率加上pid控制的值
+    right_motor_speed = initial_R_motor_speed - PID_value;//右轮之前的频率减去pid控制的值
+
+    //检测电机的设定速度，+-255为最大值，如果超出了速度边界，则停止在+-255
+    //这里的速度应该用为频率，具体转换公式需要研究
+    if(left_motor_speed < -255)
+    {
+        left_motor_speed = -255;
+    }
+    if(left_motor_speed > 255)
+    {
+        left_motor_speed = 255;
+    }
+    if(right_motor_speed < -255)
+    {
+        right_motor_speed = -255;
+    }
+    if(right_motor_speed > 255)
+    {
+        right_motor_speed = 255;
+    }
+    initial_L_motor_speed = left_motor_speed;
+    initial_R_motor_speed = right_motor_speed;
+    //写入电机的pwm波频率
+    ledcWrite(0,right_motor_speed*20);
+    ledcWrite(1,left_motor_speed *20);
+}
+
+void loop()
+{
+    Serial.begin(9600);
+    setup_motor();               //电机初始化
+    read_sensor_values();        //获取2个寻迹模块的数值情况
+    calc_pid();                  //pid算法计算出转向的pwm值
+    motor_ctrl();                //电机转动
+}
+
+
+

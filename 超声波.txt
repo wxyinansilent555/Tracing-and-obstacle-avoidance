@@ -1,0 +1,74 @@
+//声速为0.034cm/微秒
+int TR_left = ;//发送脉冲引脚
+int EC_left = ;//接收脉冲引脚
+int TR_middle = ;
+int EC_middle = ;
+int TR_right = ;
+int EC_right = ;
+
+float TM_us_left;//定义脉冲宽度储存变量和最终距离的变量
+float TM_us_middle;
+float TM_us_right;
+float CJ[4];
+
+void csb_setup()
+{
+    pinMode(TR_left, OUTPUT);//设置TR为输出状态
+    pinMode(EC_left, INPUT);// 设置EC为输入状态
+    pinMode(TR_middle, OUTPUT);
+    pinMode(EC_middle, INPUT);
+    pinMode(TR_right, OUTPUT);
+    pinMode(EC_right, INPUT);
+
+}
+void csb_ctrl()
+{
+    digitalWrite(TR_left, HIGH);
+    delayMicroseconds(10);//延时10微秒
+    digitalWrite(TR_left, LOW);
+    TM_us_left = pulseIn(EC_left,HIGH);//接受测量脉冲的宽度
+    if((TM_us_left<60000) && (TM_us_left> 1){
+        //有效的脉冲宽度应该介于0-60000之间
+        CJ[0] = TM_us_left * 0.034/2;//接收的脉冲宽度时间*0.034/2就是实际被测物体的距离
+        Serial.println(CJ[0]);
+    }
+    digitalWrite(TR_middle, HIGH);
+    delayMicroseconds(10);//延时10微秒
+    digitalWrite(TR_middle, LOW);
+    TM_us_middle = pulseIn(EC_middle,HIGH);//接受测量脉冲的宽度
+    if((TM_us_middle<60000) && (TM_us_middle> 1){
+        //有效的脉冲宽度应该介于0-60000之间
+        CJ[1] = TM_us_middle * 0.034/2;//接收的脉冲宽度时间*0.034/2就是实际被测物体的距离
+        Serial.println(CJ[1]);
+    }
+    digitalWrite(TR_right, HIGH);
+    delayMicroseconds(10);//延时10微秒
+    digitalWrite(TR_right, LOW);
+    TM_us_right = pulseIn(EC_right,HIGH);//接受测量脉冲的宽度
+    if((TM_us_right<60000) && (TM_us_right> 1){
+        //有效的脉冲宽度应该介于0-60000之间
+        CJ[2] = TM_us_right * 0.034/2;//接收的脉冲宽度时间*0.034/2就是实际被测物体的距离
+        Serial.println(CJ[2]);
+    }
+}
+
+void csb_bz(){
+//不知道要不要加倒退的。。。
+    csb_ctrl();
+    delay(80);//延时80ms让接收到的数据更加稳定
+    if(CJ[1]<30){
+        //前方有障碍，先停下来，检测左右两边的超声波
+        if((CJ[0]>CJ[2]) && (CJ[0]>30)){
+        //左边的空间大于右边，左转
+        //这里会和寻迹有冲突看顺序吧
+        pw1 = 1700;
+        pw2 = 2100;
+        }
+        if((CJ[2]>CJ[0]) && (CJ[2]>30)){
+        //左边的空间小于右边，右转
+        pw1 = 2100;
+        pw2 = 1700;
+        }
+    }
+}
+
